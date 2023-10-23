@@ -29,17 +29,18 @@ function clearCanvas() {
   context.fillRect(0, 0, canWidth, canHeight);
 }
 
-function draw(
-  e: MouseEvent,
-  cursor: { active: boolean; x: number; y: number }
-) {
-  if (cursor.active) {
+function drawLine(line: Point[]) {
+  const head: Point = line[0];
+  console.log(line);
+  if (line.length) {
     context.beginPath();
-    context.moveTo(cursor.x, cursor.y);
-    context.lineTo(e.offsetX, e.offsetY);
+
+    context.moveTo(head.x, head.y);
+    line.forEach((point) => {
+      context.lineTo(point.x, point.y);
+    });
+
     context.stroke();
-    cursor.x = e.offsetX;
-    cursor.y = e.offsetY;
   }
 }
 
@@ -59,29 +60,56 @@ clearCanvas();
 
 const cursor = { active: false, x: 0, y: 0 };
 
+interface Point {
+  x: number;
+  y: number;
+}
+
+const change = new Event("drawing-change");
+
+const lines: Point[][] = [];
+let currLine: Point[] = [];
+
 canvas.addEventListener("mousedown", (e) => {
   setCursorState(true);
   setCursorPos(cursor, e);
-  context.beginPath();
+  currLine.length = 0;
+  lines.push(currLine);
+  currLine.push({ x: cursor.x, y: cursor.y });
+  canvas.dispatchEvent(change);
 });
 
 canvas.addEventListener("mousemove", (e) => {
   if (cursor.active && context) {
-    draw(e, cursor);
+    setCursorPos(cursor, e);
+    currLine.push({ x: cursor.x, y: cursor.y });
+    canvas.dispatchEvent(change);
   }
 });
 
 canvas.addEventListener("mouseup", () => {
   cursor.active = false;
+  currLine = [];
+
+  canvas.dispatchEvent(change);
 });
 
 canvas.addEventListener("mouseleave", () => {
-  console.log("enter canvas");
   setCursorState(false);
-  context.beginPath();
+  currLine = [];
+  canvas.dispatchEvent(change);
+});
+
+canvas.addEventListener("drawing-change", () => {
+  clearCanvas();
+  lines.forEach((line) => drawLine(line));
 });
 
 const clear = document.createElement("button");
 clear.textContent = "clear";
-clear.addEventListener("click", clearCanvas);
+clear.addEventListener("click", () => {
+  lines.length = 0;
+  console.log(lines);
+  clearCanvas();
+});
 container.append(clear);
