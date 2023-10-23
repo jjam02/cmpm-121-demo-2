@@ -24,21 +24,16 @@ header.innerHTML = gameName;
 app.prepend(header);
 
 context.fillStyle = "white";
+
 function clearCanvas() {
   context.fillRect(0, 0, canWidth, canHeight);
 }
-clearCanvas();
 
-const cursor = { active: false, x: 0, y: 0 };
-
-canvas.addEventListener("mousedown", (e) => {
-  cursor.active = true;
-  cursor.x = e.offsetX;
-  cursor.y = e.offsetY;
-});
-
-canvas.addEventListener("mousemove", (e) => {
-  if (cursor.active && context) {
+function draw(
+  e: MouseEvent,
+  cursor: { active: boolean; x: number; y: number }
+) {
+  if (cursor.active) {
     context.beginPath();
     context.moveTo(cursor.x, cursor.y);
     context.lineTo(e.offsetX, e.offsetY);
@@ -46,10 +41,48 @@ canvas.addEventListener("mousemove", (e) => {
     cursor.x = e.offsetX;
     cursor.y = e.offsetY;
   }
+}
+
+function setCursorState(active: boolean, e?: MouseEvent) {
+  cursor.active = active;
+  if (e) {
+    cursor.x = e.offsetX;
+    cursor.y = e.offsetY;
+  }
+}
+
+function setCursorPos(
+  cursor: { active: boolean; x: number; y: number },
+  e: MouseEvent
+) {
+  cursor.x = e.offsetX;
+  cursor.y = e.offsetY;
+}
+
+clearCanvas();
+
+const cursor = { active: false, x: 0, y: 0 };
+
+canvas.addEventListener("mousedown", (e) => {
+  setCursorState(true);
+  setCursorPos(cursor, e);
+  context.beginPath();
+});
+
+canvas.addEventListener("mousemove", (e) => {
+  if (cursor.active && context) {
+    draw(e, cursor);
+  }
 });
 
 canvas.addEventListener("mouseup", () => {
   cursor.active = false;
+});
+
+canvas.addEventListener("mouseleave", () => {
+  console.log("enter canvas");
+  setCursorState(false);
+  context.beginPath();
 });
 
 const clear = document.createElement("button");
