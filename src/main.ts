@@ -43,12 +43,8 @@ function draw(
   }
 }
 
-function setCursorState(active: boolean, e?: MouseEvent) {
+function setCursorState(active: boolean) {
   cursor.active = active;
-  if (e) {
-    cursor.x = e.offsetX;
-    cursor.y = e.offsetY;
-  }
 }
 
 function setCursorPos(
