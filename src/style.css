@@ -79,3 +79,9 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+#draw {
+  border-radius: 5px;
+  border: 1px solid black;
+  filter: drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.705));
+}
