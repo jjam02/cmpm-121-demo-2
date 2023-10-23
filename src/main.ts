@@ -5,6 +5,7 @@ const app: HTMLDivElement = document.querySelector("#app")!;
 const gameName = "Jonathan Paint";
 const canWidth = 256;
 const canHeight = 256;
+let isDown = false;
 
 const container = document.createElement("container");
 container.id = "Mycontainer";
@@ -71,6 +72,7 @@ const lines: Point[][] = [];
 let currLine: Point[] = [];
 
 canvas.addEventListener("mousedown", (e) => {
+  isDown = true;
   setCursorState(true);
   setCursorPos(cursor, e);
   currLine.length = 0;
@@ -80,7 +82,7 @@ canvas.addEventListener("mousedown", (e) => {
 });
 
 canvas.addEventListener("mousemove", (e) => {
-  if (cursor.active && context) {
+  if ((cursor.active && context) || isDown) {
     setCursorPos(cursor, e);
     currLine.push({ x: cursor.x, y: cursor.y });
     canvas.dispatchEvent(change);
@@ -88,6 +90,7 @@ canvas.addEventListener("mousemove", (e) => {
 });
 
 canvas.addEventListener("mouseup", () => {
+  isDown = false;
   cursor.active = false;
   currLine = [];
 
@@ -98,6 +101,17 @@ canvas.addEventListener("mouseleave", () => {
   setCursorState(false);
   currLine = [];
   canvas.dispatchEvent(change);
+});
+
+canvas.addEventListener("mouseenter", (e) => {
+  if (isDown) {
+    console.log("I ENTER");
+    setCursorPos(cursor, e);
+    currLine.length = 0;
+    lines.push(currLine);
+    currLine.push({ x: cursor.x, y: cursor.y });
+    canvas.dispatchEvent(change);
+  }
 });
 
 canvas.addEventListener("drawing-change", () => {
