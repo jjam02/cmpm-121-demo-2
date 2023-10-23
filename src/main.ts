@@ -5,7 +5,6 @@ const app: HTMLDivElement = document.querySelector("#app")!;
 const gameName = "Jonathan Paint";
 const canWidth = 256;
 const canHeight = 256;
-let isDown = false;
 
 const container = document.createElement("container");
 container.id = "Mycontainer";
@@ -32,8 +31,9 @@ function clearCanvas() {
 
 function drawLine(line: Point[]) {
   const head: Point = line[0];
-  console.log(line);
+
   if (line.length) {
+    console.log("now youre drawing ");
     context.beginPath();
 
     context.moveTo(head.x, head.y);
@@ -43,6 +43,10 @@ function drawLine(line: Point[]) {
 
     context.stroke();
   }
+}
+
+function isEmpty<T>(arr: T[]): boolean {
+  return arr.length <= 0;
 }
 
 function setCursorState(active: boolean) {
@@ -69,10 +73,11 @@ interface Point {
 const change = new Event("drawing-change");
 
 const lines: Point[][] = [];
+const redoLines: Point[][] = [];
+
 let currLine: Point[] = [];
 
 canvas.addEventListener("mousedown", (e) => {
-  isDown = true;
   setCursorState(true);
   setCursorPos(cursor, e);
   currLine.length = 0;
@@ -82,36 +87,19 @@ canvas.addEventListener("mousedown", (e) => {
 });
 
 canvas.addEventListener("mousemove", (e) => {
-  if ((cursor.active && context) || isDown) {
+  if (cursor.active && context) {
     setCursorPos(cursor, e);
     currLine.push({ x: cursor.x, y: cursor.y });
+    redoLines.length = 0;
     canvas.dispatchEvent(change);
   }
 });
 
 canvas.addEventListener("mouseup", () => {
-  isDown = false;
   cursor.active = false;
   currLine = [];
 
   canvas.dispatchEvent(change);
-});
-
-canvas.addEventListener("mouseleave", () => {
-  setCursorState(false);
-  currLine = [];
-  canvas.dispatchEvent(change);
-});
-
-canvas.addEventListener("mouseenter", (e) => {
-  if (isDown) {
-    console.log("I ENTER");
-    setCursorPos(cursor, e);
-    currLine.length = 0;
-    lines.push(currLine);
-    currLine.push({ x: cursor.x, y: cursor.y });
-    canvas.dispatchEvent(change);
-  }
 });
 
 canvas.addEventListener("drawing-change", () => {
@@ -123,7 +111,29 @@ const clear = document.createElement("button");
 clear.textContent = "clear";
 clear.addEventListener("click", () => {
   lines.length = 0;
-  console.log(lines);
+
   clearCanvas();
 });
 container.append(clear);
+
+const redo = document.createElement("button");
+redo.textContent = "redo";
+redo.addEventListener("click", () => {
+  if (!isEmpty(redoLines)) {
+    lines.push(redoLines.pop()!);
+    canvas.dispatchEvent(change);
+  }
+});
+
+container.append(redo);
+
+const undo = document.createElement("button");
+undo.textContent = "undo";
+undo.addEventListener("click", () => {
+  if (!isEmpty(lines)) {
+    redoLines.push(lines.pop()!);
+    canvas.dispatchEvent(change);
+  }
+});
+
+container.append(undo);
