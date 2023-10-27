@@ -1,33 +1,5 @@
 import "./style.css";
 
-//----------------------------CLASS DEFINITIONS----------------------------------------------
-
-class LineCommand {
-  points: { x: number; y: number }[];
-  constructor(x: number, y: number) {
-    this.points = [{ x, y }];
-  }
-  display(ctx: CanvasRenderingContext2D) {
-    ctx.strokeStyle = "black";
-    const head: Point = this.points[0];
-
-    console.log("now youre drawing ");
-    ctx.beginPath();
-
-    ctx.moveTo(head.x, head.y);
-    this.points.forEach((point) => {
-      ctx.lineTo(point.x, point.y);
-    });
-
-    ctx.stroke();
-  }
-  drag(x: number, y: number) {
-    this.points.push({ x, y });
-  }
-}
-
-//--------------------------------------------------------------------------------------------------------
-
 //--------------------HTML--------------------------------------------------------------------------------\
 const app: HTMLDivElement = document.querySelector("#app")!;
 
@@ -57,17 +29,54 @@ ctx.fillStyle = "white";
 const clear = document.createElement("button");
 clear.textContent = "clear";
 
-container.append(clear);
-
 const redo = document.createElement("button");
 redo.textContent = "redo";
-
-container.append(redo);
 
 const undo = document.createElement("button");
 undo.textContent = "undo";
 
-container.append(undo);
+const standard = document.createElement("button");
+standard.classList.add("selected");
+standard.textContent = "standard";
+
+const thick = document.createElement("button");
+thick.textContent = "thick";
+
+const thin = document.createElement("button");
+thin.textContent = "thin";
+
+container.append(clear, redo, undo, standard, thick, thin);
+
+//--------------------------------------------------------------------------------------------------------
+
+//----------------------------CLASS DEFINITIONS----------------------------------------------
+
+class LineCommand {
+  points: { x: number; y: number }[];
+  thickness: number;
+  constructor(x: number, y: number, thick: number) {
+    this.points = [{ x, y }];
+    this.thickness = thick;
+  }
+  display(ctx: CanvasRenderingContext2D) {
+    ctx.lineWidth = this.thickness;
+    ctx.strokeStyle = "black";
+    const head: Point = this.points[0];
+
+    console.log("now youre drawing ");
+    ctx.beginPath();
+
+    ctx.moveTo(head.x, head.y);
+    this.points.forEach((point) => {
+      ctx.lineTo(point.x, point.y);
+    });
+
+    ctx.stroke();
+  }
+  drag(x: number, y: number) {
+    this.points.push({ x, y });
+  }
+}
 
 //--------------------------------------------------------------------------------------------------------
 
@@ -104,6 +113,10 @@ interface Point {
   x: number;
   y: number;
 }
+const standardLine = 2;
+const thickLine = 5;
+const thinLine = 0.5;
+let lineWidth: number = standardLine;
 
 const change = new Event("drawing-change");
 
@@ -116,10 +129,8 @@ const redoLines: LineCommand[] = [];
 canvas.addEventListener("mousedown", (e) => {
   setCursorState(true);
   setCursorPos(cursor, e);
-  // currLine.length = 0;
-  // lines.push(currLine);
-  lines.push(new LineCommand(cursor.x, cursor.y));
-  //canvas.dispatchEvent(change);
+
+  lines.push(new LineCommand(cursor.x, cursor.y, lineWidth));
 });
 
 canvas.addEventListener("mousemove", (e) => {
@@ -128,13 +139,11 @@ canvas.addEventListener("mousemove", (e) => {
     lines[lines.length - 1].drag(cursor.x, cursor.y);
     lines[lines.length - 1].display(ctx);
     redoLines.length = 0;
-    //canvas.dispatchEvent(change);
   }
 });
 
 canvas.addEventListener("mouseup", () => {
   cursor.active = false;
-  //currLine = [];
 
   canvas.dispatchEvent(change);
 });
@@ -163,6 +172,27 @@ undo.addEventListener("click", () => {
     redoLines.push(lines.pop()!);
     canvas.dispatchEvent(change);
   }
+});
+
+standard.addEventListener("click", () => {
+  standard.classList.add("selected");
+  thin.classList.remove("selected");
+  thick.classList.remove("selected");
+  lineWidth = standardLine;
+});
+
+thick.addEventListener("click", () => {
+  thick.classList.add("selected");
+  standard.classList.remove("selected");
+  thin.classList.remove("selected");
+  lineWidth = thickLine;
+});
+
+thin.addEventListener("click", () => {
+  thin.classList.add("selected");
+  standard.classList.remove("selected");
+  thick.classList.remove("selected");
+  lineWidth = thinLine;
 });
 
 //-------------------------------------------------------------------------------------
