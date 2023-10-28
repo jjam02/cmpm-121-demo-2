@@ -11,6 +11,14 @@ const container = document.createElement("container");
 container.id = "Mycontainer";
 app.append(container);
 
+const containerPen = document.createElement("container");
+containerPen.id = "Mycontainer";
+app.append(containerPen);
+
+const containerStick = document.createElement("container");
+containerStick.id = "Mycontainer";
+app.append(containerStick);
+
 document.title = gameName;
 
 const canvas = document.createElement("canvas");
@@ -45,7 +53,18 @@ thick.textContent = "thick";
 const thin = document.createElement("button");
 thin.textContent = "thin";
 
-container.append(clear, redo, undo, standard, thick, thin);
+const sticker1 = document.createElement("button");
+sticker1.textContent = "🔥";
+
+const sticker2 = document.createElement("button");
+sticker2.textContent = "💯";
+
+const sticker3 = document.createElement("button");
+sticker3.textContent = "😂";
+
+container.append(clear, redo, undo);
+containerPen.append(thin, standard, thick);
+containerStick.append(sticker1, sticker2, sticker3);
 
 //--------------------------------------------------------------------------------------------------------
 
@@ -84,35 +103,62 @@ class LineCommand {
 class ToolCommnad {
   x: number;
   y: number;
-  constructor(x: number, y: number) {
+  sticker: string;
+  mode: string;
+  constructor(x: number, y: number, sticker: string, mode: string) {
     this.x = x;
     this.y = y;
+    this.sticker = sticker;
+    this.mode = mode;
   }
 
   display(ctx: CanvasRenderingContext2D) {
-    console.log("drawing tool");
     const fillStyle = ctx.fillStyle;
-    switch (lineWidth) {
-      case standardLine:
-        ctx.fillStyle = "black";
-        console.log("CASE 143 I LOVE YOU");
-        ctx.font = "24px monospace";
-        ctx.fillText(".", this.x - 8, this.y + 3);
-        ctx.fillStyle = fillStyle;
-        break;
-      case thinLine:
-        ctx.fillStyle = "black";
-        ctx.font = "8px monospace";
-        ctx.fillText(".", this.x - 2, this.y + 2.5);
-        ctx.fillStyle = fillStyle;
-        break;
-      case thickLine:
-        ctx.fillStyle = "black";
-        ctx.font = "64px monospace";
-        ctx.fillText(".", this.x - 20, this.y + 10);
-        ctx.fillStyle = fillStyle;
-        break;
+    if (this.mode == "line") {
+      switch (lineWidth) {
+        case standardLine:
+          ctx.fillStyle = "black";
+          ctx.font = "24px monospace";
+          ctx.fillText(".", this.x - 8, this.y + 3);
+          ctx.fillStyle = fillStyle;
+          break;
+        case thinLine:
+          ctx.fillStyle = "black";
+          ctx.font = "8px monospace";
+          ctx.fillText(".", this.x - 2, this.y + 2.5);
+          ctx.fillStyle = fillStyle;
+          break;
+        case thickLine:
+          ctx.fillStyle = "black";
+          ctx.font = "64px monospace";
+          ctx.fillText(".", this.x - 20, this.y + 10);
+          ctx.fillStyle = fillStyle;
+          break;
+      }
+    } else if (this.mode == "sticker") {
+      ctx.font = `${Math.max(7, 25)}px monospace`;
+      ctx.fillText(this.sticker, this.x - 2, this.y + 2.5);
     }
+  }
+}
+
+class StickerCommand {
+  x: number;
+  y: number;
+  sticker: string;
+
+  constructor(x: number, y: number, sticker: string) {
+    this.x = x;
+    this.y = y;
+    this.sticker = sticker;
+  }
+  display(ctx: CanvasRenderingContext2D) {
+    ctx.font = `${Math.max(7, 25)}px monospace`;
+    ctx.fillText(this.sticker, this.x - 2, this.y + 2.5);
+  }
+  drag(x: number, y: number) {
+    this.x = x;
+    this.y = y;
   }
 }
 
@@ -156,49 +202,55 @@ clearCanvas();
 const cursor = { active: false, x: 0, y: 0 };
 let tool: ToolCommnad | null = null;
 
-const standardLine = 2;
-const thickLine = 5;
-const thinLine = 0.5;
+const standardLine = 4;
+const thickLine = 8;
+const thinLine = 2;
+let mode = "line";
+let currenSticker = "";
 let lineWidth: number = standardLine;
 
 const change = new Event("drawing-change");
 const toolChange = new Event("tool-move");
 
-const lines: LineCommand[] = [];
-const redoLines: LineCommand[] = [];
+const lines: (LineCommand | StickerCommand)[] = [];
+const redoLines: (LineCommand | StickerCommand)[] = [];
 //----------------------------------------------------------------
 
 //-----------------EVENT HANDLING------------------------
 
 canvas.addEventListener("mouseout", () => {
   tool = null;
+  //redraw();
 });
 
 canvas.addEventListener("mouseenter", (e) => {
   setCursorPos(cursor, e);
 
-  tool = new ToolCommnad(cursor.x, cursor.y);
+  tool = new ToolCommnad(cursor.x, cursor.y, currenSticker, mode);
 });
 
 canvas.addEventListener("mousedown", (e) => {
   setCursorState(true);
   setCursorPos(cursor, e);
   tool = null;
-
-  lines.push(new LineCommand(cursor.x, cursor.y, lineWidth));
+  if (currenSticker == "") {
+    lines.push(new LineCommand(cursor.x, cursor.y, lineWidth));
+  } else {
+    lines.push(new StickerCommand(cursor.x, cursor.y, currenSticker));
+  }
   canvas.dispatchEvent(change);
 });
 
 canvas.addEventListener("mousemove", (e) => {
   setCursorPos(cursor, e);
-  if (cursor.active && ctx) {
+  if (cursor.active && ctx && !currenSticker) {
     tool = null;
     lines[lines.length - 1].drag(cursor.x, cursor.y);
     lines[lines.length - 1].display(ctx);
     redoLines.length = 0;
-    tool = null;
   } else {
-    tool = new ToolCommnad(cursor.x, cursor.y);
+    tool = new ToolCommnad(cursor.x, cursor.y, currenSticker, mode);
+    lines[lines.length - 1].display(ctx);
     canvas.dispatchEvent(toolChange);
   }
 });
@@ -206,7 +258,7 @@ canvas.addEventListener("mousemove", (e) => {
 canvas.addEventListener("mouseup", (e) => {
   cursor.active = false;
   setCursorPos(cursor, e);
-  tool = new ToolCommnad(cursor.x, cursor.y);
+  tool = new ToolCommnad(cursor.x, cursor.y, currenSticker, mode);
 
   canvas.dispatchEvent(change);
 });
@@ -245,6 +297,8 @@ standard.addEventListener("click", () => {
   thin.classList.remove("selected");
   thick.classList.remove("selected");
   lineWidth = standardLine;
+  currenSticker = "";
+  mode = "line";
 });
 
 thick.addEventListener("click", () => {
@@ -252,6 +306,8 @@ thick.addEventListener("click", () => {
   standard.classList.remove("selected");
   thin.classList.remove("selected");
   lineWidth = thickLine;
+  currenSticker = "";
+  mode = "line";
 });
 
 thin.addEventListener("click", () => {
@@ -259,6 +315,23 @@ thin.addEventListener("click", () => {
   standard.classList.remove("selected");
   thick.classList.remove("selected");
   lineWidth = thinLine;
+  currenSticker = "";
+  mode = "line";
+});
+
+sticker1.addEventListener("click", () => {
+  currenSticker = "🔥";
+  mode = "sticker";
+});
+
+sticker2.addEventListener("click", () => {
+  currenSticker = "💯";
+  mode = "sticker";
+});
+
+sticker3.addEventListener("click", () => {
+  currenSticker = "😂";
+  mode = "sticker";
 });
 
 //-------------------------------------------------------------------------------------
