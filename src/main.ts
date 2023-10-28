@@ -233,11 +233,9 @@ canvas.addEventListener("mousedown", (e) => {
   setCursorState(true);
   setCursorPos(cursor, e);
   tool = null;
-  if (currenSticker == "") {
-    lines.push(new LineCommand(cursor.x, cursor.y, lineWidth));
-  } else {
-    lines.push(new StickerCommand(cursor.x, cursor.y, currenSticker));
-  }
+
+  lines.push(new LineCommand(cursor.x, cursor.y, lineWidth));
+
   canvas.dispatchEvent(change);
 });
 
@@ -258,6 +256,9 @@ canvas.addEventListener("mousemove", (e) => {
 canvas.addEventListener("mouseup", (e) => {
   cursor.active = false;
   setCursorPos(cursor, e);
+  if (currenSticker) {
+    lines.push(new StickerCommand(cursor.x, cursor.y, currenSticker));
+  }
   tool = new ToolCommnad(cursor.x, cursor.y, currenSticker, mode);
 
   canvas.dispatchEvent(change);
