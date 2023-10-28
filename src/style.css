@@ -81,6 +81,7 @@ button:focus-visible {
 }
 
 #draw {
+  cursor: none;
   border-radius: 5px;
   border: 1px solid black;
   filter: drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.705));

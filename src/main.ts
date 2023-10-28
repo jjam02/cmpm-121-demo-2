@@ -50,9 +50,12 @@ container.append(clear, redo, undo, standard, thick, thin);
 //--------------------------------------------------------------------------------------------------------
 
 //----------------------------CLASS DEFINITIONS----------------------------------------------
-
+interface Point {
+  x: number;
+  y: number;
+}
 class LineCommand {
-  points: { x: number; y: number }[];
+  points: Point[];
   thickness: number;
   constructor(x: number, y: number, thick: number) {
     this.points = [{ x, y }];
@@ -75,6 +78,41 @@ class LineCommand {
   }
   drag(x: number, y: number) {
     this.points.push({ x, y });
+  }
+}
+
+class ToolCommnad {
+  x: number;
+  y: number;
+  constructor(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+  }
+
+  display(ctx: CanvasRenderingContext2D) {
+    console.log("drawing tool");
+    const fillStyle = ctx.fillStyle;
+    switch (lineWidth) {
+      case standardLine:
+        ctx.fillStyle = "black";
+        console.log("CASE 143 I LOVE YOU");
+        ctx.font = "24px monospace";
+        ctx.fillText(".", this.x - 8, this.y + 3);
+        ctx.fillStyle = fillStyle;
+        break;
+      case thinLine:
+        ctx.fillStyle = "black";
+        ctx.font = "8px monospace";
+        ctx.fillText(".", this.x - 2, this.y + 2.5);
+        ctx.fillStyle = fillStyle;
+        break;
+      case thickLine:
+        ctx.fillStyle = "black";
+        ctx.font = "64px monospace";
+        ctx.fillText(".", this.x - 20, this.y + 10);
+        ctx.fillStyle = fillStyle;
+        break;
+    }
   }
 }
 
@@ -101,6 +139,14 @@ function setCursorPos(
   cursor.y = e.offsetY;
 }
 
+function redraw() {
+  clearCanvas();
+  lines.forEach((line) => line.display(ctx));
+  if (tool) {
+    tool.display(ctx);
+  }
+}
+
 clearCanvas();
 
 //-------------------------------------------------------------------------------------
@@ -108,17 +154,15 @@ clearCanvas();
 //---------------------------data---------------------------------
 
 const cursor = { active: false, x: 0, y: 0 };
+let tool: ToolCommnad | null = null;
 
-interface Point {
-  x: number;
-  y: number;
-}
 const standardLine = 2;
 const thickLine = 5;
 const thinLine = 0.5;
 let lineWidth: number = standardLine;
 
 const change = new Event("drawing-change");
+const toolChange = new Event("tool-move");
 
 const lines: LineCommand[] = [];
 const redoLines: LineCommand[] = [];
@@ -126,31 +170,53 @@ const redoLines: LineCommand[] = [];
 
 //-----------------EVENT HANDLING------------------------
 
+canvas.addEventListener("mouseout", () => {
+  tool = null;
+});
+
+canvas.addEventListener("mouseenter", (e) => {
+  setCursorPos(cursor, e);
+
+  tool = new ToolCommnad(cursor.x, cursor.y);
+});
+
 canvas.addEventListener("mousedown", (e) => {
   setCursorState(true);
   setCursorPos(cursor, e);
+  tool = null;
 
   lines.push(new LineCommand(cursor.x, cursor.y, lineWidth));
+  canvas.dispatchEvent(change);
 });
 
 canvas.addEventListener("mousemove", (e) => {
+  setCursorPos(cursor, e);
   if (cursor.active && ctx) {
-    setCursorPos(cursor, e);
+    tool = null;
     lines[lines.length - 1].drag(cursor.x, cursor.y);
     lines[lines.length - 1].display(ctx);
     redoLines.length = 0;
+    tool = null;
+  } else {
+    tool = new ToolCommnad(cursor.x, cursor.y);
+    canvas.dispatchEvent(toolChange);
   }
 });
 
-canvas.addEventListener("mouseup", () => {
+canvas.addEventListener("mouseup", (e) => {
   cursor.active = false;
+  setCursorPos(cursor, e);
+  tool = new ToolCommnad(cursor.x, cursor.y);
 
   canvas.dispatchEvent(change);
 });
 
 canvas.addEventListener("drawing-change", () => {
-  clearCanvas();
-  lines.forEach((line) => line.display(ctx));
+  redraw();
+});
+
+canvas.addEventListener("tool-move", () => {
+  redraw();
 });
 
 clear.addEventListener("click", () => {
