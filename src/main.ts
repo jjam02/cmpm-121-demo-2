@@ -44,14 +44,17 @@ const undo = document.createElement("button");
 undo.textContent = "undo";
 
 const standard = document.createElement("button");
-standard.classList.add("selected");
+//standard.classList.add("selected");
 standard.textContent = "standard";
+standard.classList.add("selectable");
 
 const thick = document.createElement("button");
 thick.textContent = "thick";
+thick.classList.add("selectable");
 
 const thin = document.createElement("button");
 thin.textContent = "thin";
+thin.classList.add("selectable");
 
 container.append(clear, redo, undo);
 containerPen.append(thin, standard, thick);
@@ -159,7 +162,7 @@ class StickerCommand {
 
 //--------------------------------------------------------------------------------------------------------
 
-//-------------------helper functions-------------------------------------------------------------------
+//-------------------HELPER FUNCTIONS-------------------------------------------------------------------
 function clearCanvas() {
   ctx.fillRect(0, 0, canWidth, canHeight);
 }
@@ -190,10 +193,16 @@ function redraw() {
 
 function setupStickerButton(sticker: Sticker) {
   sticker.button.textContent = sticker.emoji;
-  sticker.button.addEventListener("click", () => {
+  sticker.button.addEventListener("click", function () {
+    const selectableButtons = document.querySelectorAll(".selectable");
+    selectableButtons.forEach((button) => {
+      button.classList.remove("selected");
+    });
+    this.classList.add("selected");
     currentSticker = sticker.emoji;
     mode = "sticker";
   });
+  sticker.button.classList.add("selectable");
   containerStick.append(sticker.button);
 }
 
@@ -201,7 +210,7 @@ clearCanvas();
 
 //-------------------------------------------------------------------------------------
 
-//---------------------------data---------------------------------
+//---------------------------DATA---------------------------------
 
 const cursor = { active: false, x: 0, y: 0 };
 let tool: ToolCommnad | null = null;
@@ -316,28 +325,34 @@ undo.addEventListener("click", () => {
   }
 });
 
-standard.addEventListener("click", () => {
-  standard.classList.add("selected");
-  thin.classList.remove("selected");
-  thick.classList.remove("selected");
+standard.addEventListener("click", function () {
+  const selectableButtons = document.querySelectorAll(".selectable");
+  selectableButtons.forEach((button) => {
+    button.classList.remove("selected");
+  });
+  this.classList.add("selected");
   lineWidth = standardLine;
   currentSticker = "";
   mode = "line";
 });
 
-thick.addEventListener("click", () => {
-  thick.classList.add("selected");
-  standard.classList.remove("selected");
-  thin.classList.remove("selected");
+thick.addEventListener("click", function () {
+  const selectableButtons = document.querySelectorAll(".selectable");
+  selectableButtons.forEach((button) => {
+    button.classList.remove("selected");
+  });
+  this.classList.add("selected");
   lineWidth = thickLine;
   currentSticker = "";
   mode = "line";
 });
 
-thin.addEventListener("click", () => {
-  thin.classList.add("selected");
-  standard.classList.remove("selected");
-  thick.classList.remove("selected");
+thin.addEventListener("click", function () {
+  const selectableButtons = document.querySelectorAll(".selectable");
+  selectableButtons.forEach((button) => {
+    button.classList.remove("selected");
+  });
+  this.classList.add("selected");
   lineWidth = thinLine;
   currentSticker = "";
   mode = "line";
