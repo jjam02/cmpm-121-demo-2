@@ -220,7 +220,7 @@ const redoLines: (LineCommand | StickerCommand)[] = [];
 
 canvas.addEventListener("mouseout", () => {
   tool = null;
-  //redraw();
+  redraw();
 });
 
 canvas.addEventListener("mouseenter", (e) => {
@@ -233,8 +233,9 @@ canvas.addEventListener("mousedown", (e) => {
   setCursorState(true);
   setCursorPos(cursor, e);
   tool = null;
-
-  lines.push(new LineCommand(cursor.x, cursor.y, lineWidth));
+  if (!currenSticker) {
+    lines.push(new LineCommand(cursor.x, cursor.y, lineWidth));
+  }
 
   canvas.dispatchEvent(change);
 });
