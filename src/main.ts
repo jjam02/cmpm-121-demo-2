@@ -53,18 +53,8 @@ thick.textContent = "thick";
 const thin = document.createElement("button");
 thin.textContent = "thin";
 
-const sticker1 = document.createElement("button");
-sticker1.textContent = "🔥";
-
-const sticker2 = document.createElement("button");
-sticker2.textContent = "💯";
-
-const sticker3 = document.createElement("button");
-sticker3.textContent = "😂";
-
 container.append(clear, redo, undo);
 containerPen.append(thin, standard, thick);
-containerStick.append(sticker1, sticker2, sticker3);
 
 //--------------------------------------------------------------------------------------------------------
 
@@ -72,6 +62,11 @@ containerStick.append(sticker1, sticker2, sticker3);
 interface Point {
   x: number;
   y: number;
+}
+
+interface Sticker {
+  emoji: string;
+  button: HTMLButtonElement;
 }
 class LineCommand {
   points: Point[];
@@ -193,6 +188,15 @@ function redraw() {
   }
 }
 
+function setupStickerButton(sticker: Sticker) {
+  sticker.button.textContent = sticker.emoji;
+  sticker.button.addEventListener("click", () => {
+    currentSticker = sticker.emoji;
+    mode = "sticker";
+  });
+  containerStick.append(sticker.button);
+}
+
 clearCanvas();
 
 //-------------------------------------------------------------------------------------
@@ -206,7 +210,7 @@ const standardLine = 4;
 const thickLine = 8;
 const thinLine = 2;
 let mode = "line";
-let currenSticker = "";
+let currentSticker = "";
 let lineWidth: number = standardLine;
 
 const change = new Event("drawing-change");
@@ -214,6 +218,24 @@ const toolChange = new Event("tool-move");
 
 const lines: (LineCommand | StickerCommand)[] = [];
 const redoLines: (LineCommand | StickerCommand)[] = [];
+
+const availableStickers: Sticker[] = [
+  {
+    emoji: "🔥",
+    button: document.createElement("button"),
+  },
+  {
+    emoji: "💯",
+    button: document.createElement("button"),
+  },
+  {
+    emoji: "😂",
+    button: document.createElement("button"),
+  },
+];
+
+availableStickers.forEach((sticker) => setupStickerButton(sticker));
+
 //----------------------------------------------------------------
 
 //-----------------EVENT HANDLING------------------------
@@ -226,14 +248,14 @@ canvas.addEventListener("mouseout", () => {
 canvas.addEventListener("mouseenter", (e) => {
   setCursorPos(cursor, e);
 
-  tool = new ToolCommnad(cursor.x, cursor.y, currenSticker, mode);
+  tool = new ToolCommnad(cursor.x, cursor.y, currentSticker, mode);
 });
 
 canvas.addEventListener("mousedown", (e) => {
   setCursorState(true);
   setCursorPos(cursor, e);
   tool = null;
-  if (!currenSticker) {
+  if (!currentSticker) {
     lines.push(new LineCommand(cursor.x, cursor.y, lineWidth));
   }
 
@@ -242,13 +264,13 @@ canvas.addEventListener("mousedown", (e) => {
 
 canvas.addEventListener("mousemove", (e) => {
   setCursorPos(cursor, e);
-  if (cursor.active && ctx && !currenSticker) {
+  if (cursor.active && ctx && !currentSticker) {
     tool = null;
     lines[lines.length - 1].drag(cursor.x, cursor.y);
     lines[lines.length - 1].display(ctx);
     redoLines.length = 0;
   } else {
-    tool = new ToolCommnad(cursor.x, cursor.y, currenSticker, mode);
+    tool = new ToolCommnad(cursor.x, cursor.y, currentSticker, mode);
     lines[lines.length - 1].display(ctx);
     canvas.dispatchEvent(toolChange);
   }
@@ -257,10 +279,10 @@ canvas.addEventListener("mousemove", (e) => {
 canvas.addEventListener("mouseup", (e) => {
   cursor.active = false;
   setCursorPos(cursor, e);
-  if (currenSticker) {
-    lines.push(new StickerCommand(cursor.x, cursor.y, currenSticker));
+  if (currentSticker) {
+    lines.push(new StickerCommand(cursor.x, cursor.y, currentSticker));
   }
-  tool = new ToolCommnad(cursor.x, cursor.y, currenSticker, mode);
+  tool = new ToolCommnad(cursor.x, cursor.y, currentSticker, mode);
 
   canvas.dispatchEvent(change);
 });
@@ -299,7 +321,7 @@ standard.addEventListener("click", () => {
   thin.classList.remove("selected");
   thick.classList.remove("selected");
   lineWidth = standardLine;
-  currenSticker = "";
+  currentSticker = "";
   mode = "line";
 });
 
@@ -308,7 +330,7 @@ thick.addEventListener("click", () => {
   standard.classList.remove("selected");
   thin.classList.remove("selected");
   lineWidth = thickLine;
-  currenSticker = "";
+  currentSticker = "";
   mode = "line";
 });
 
@@ -317,23 +339,8 @@ thin.addEventListener("click", () => {
   standard.classList.remove("selected");
   thick.classList.remove("selected");
   lineWidth = thinLine;
-  currenSticker = "";
+  currentSticker = "";
   mode = "line";
-});
-
-sticker1.addEventListener("click", () => {
-  currenSticker = "🔥";
-  mode = "sticker";
-});
-
-sticker2.addEventListener("click", () => {
-  currenSticker = "💯";
-  mode = "sticker";
-});
-
-sticker3.addEventListener("click", () => {
-  currenSticker = "😂";
-  mode = "sticker";
 });
 
 //-------------------------------------------------------------------------------------
