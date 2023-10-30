@@ -44,7 +44,7 @@ const undo = document.createElement("button");
 undo.textContent = "undo";
 
 const standard = document.createElement("button");
-//standard.classList.add("selected");
+standard.classList.add("selected");
 standard.textContent = "standard";
 standard.classList.add("selectable");
 
@@ -55,6 +55,10 @@ thick.classList.add("selectable");
 const thin = document.createElement("button");
 thin.textContent = "thin";
 thin.classList.add("selectable");
+const exportButton = document.createElement("button");
+exportButton.textContent = "export";
+exportButton.style.fontSize = "2em";
+app.append(exportButton);
 
 container.append(clear, redo, undo);
 containerPen.append(thin, standard, thick);
@@ -210,6 +214,23 @@ function setupStickerButton(sticker: Sticker) {
   });
   sticker.button.classList.add("selectable");
   containerStick.append(sticker.button);
+}
+
+function exportImg() {
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = 1024;
+  tempCanvas.height = 1024;
+  const tempCtx = tempCanvas.getContext("2d")!;
+  tempCtx.fillStyle = "white";
+  tempCtx.fillRect(0, 0, 1024, 1024);
+  tempCtx.scale(4, 4);
+  lines.forEach((line) => line.display(tempCtx));
+
+  const anchor = document.createElement("a");
+  anchor.href = tempCanvas.toDataURL("image/png");
+  anchor.download = "Jonathan Paint.png";
+  anchor.click();
+  tempCanvas.remove();
 }
 
 clearCanvas();
@@ -377,4 +398,5 @@ availableStickers[3].button.addEventListener("click", function () {
   }
 });
 
+exportButton.addEventListener("click", exportImg);
 //-------------------------------------------------------------------------------------
