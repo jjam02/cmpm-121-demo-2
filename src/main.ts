@@ -64,6 +64,18 @@ exportButton.textContent = "export";
 exportButton.style.fontSize = "2em";
 app.append(exportButton);
 
+const rotateSlider = document.createElement("input");
+rotateSlider.type = "range";
+rotateSlider.min = "0";
+rotateSlider.max = "360";
+rotateSlider.value = "0";
+rotateSlider.innerText = `${rotateSlider.value} Degrees`;
+
+const rotateText = document.createElement("p");
+rotateText.innerText = ` Sticker rotation ${rotateSlider.value} Degrees`;
+
+app.append(rotateText, rotateSlider);
+
 container.append(clear, redo, undo);
 containerPen.append(thin, standard, thick, colorWheel);
 
@@ -116,18 +128,21 @@ class ToolCommnad {
   sticker: string;
   mode: string;
   color: string;
+  rotation: number;
   constructor(
     x: number,
     y: number,
     sticker: string,
     mode: string,
-    hex: string
+    hex: string,
+    degrees: number
   ) {
     this.x = x;
     this.y = y;
     this.sticker = sticker;
     this.mode = mode;
     this.color = hex;
+    this.rotation = degrees;
   }
 
   display(ctx: CanvasRenderingContext2D) {
@@ -155,9 +170,33 @@ class ToolCommnad {
       }
     } else if (this.mode == "sticker") {
       const fillStyle = ctx.fillStyle;
-      ctx.fillStyle = this.color;
+
+      // Save the current transformation matrix
+      ctx.save();
+
       ctx.font = `${Math.max(7, 25)}px monospace`;
-      ctx.fillText(this.sticker, this.x - 2, this.y + 2.5);
+      ctx.fillStyle = this.color;
+
+      // Measure the width of the text
+      const textWidth = ctx.measureText(this.sticker).width;
+
+      // Calculate the position to center the rotated text on the cursor
+      const centerX = this.x - textWidth / 2;
+      const centerY = this.y;
+
+      // Translate to the center of the text
+      ctx.translate(centerX, centerY);
+
+      // Set the rotation angle in radians
+      const rotationRadians = (this.rotation * Math.PI) / 180;
+      ctx.rotate(rotationRadians);
+
+      // Draw the rotated text
+      ctx.fillText(this.sticker, 0, 0);
+
+      // Restore the original transformation matrix
+      ctx.restore();
+
       ctx.fillStyle = fillStyle;
     }
   }
@@ -168,20 +207,53 @@ class StickerCommand {
   y: number;
   sticker: string;
   color: string;
+  rotation: number;
 
-  constructor(x: number, y: number, sticker: string, hex: string) {
+  constructor(
+    x: number,
+    y: number,
+    sticker: string,
+    hex: string,
+    degrees: number
+  ) {
     this.x = x;
     this.y = y;
     this.sticker = sticker;
     this.color = hex;
+    this.rotation = degrees;
   }
   display(ctx: CanvasRenderingContext2D) {
     const fillStyle = ctx.fillStyle;
+
+    // Save the current transformation matrix
+    ctx.save();
+
     ctx.font = `${Math.max(7, 25)}px monospace`;
     ctx.fillStyle = this.color;
-    ctx.fillText(this.sticker, this.x - 2, this.y + 2.5);
+
+    // Measure the width of the text
+    const textWidth = ctx.measureText(this.sticker).width;
+
+    // Calculate the position to center the rotated text on the cursor
+    const centerX = this.x - textWidth / 2;
+    const centerY = this.y;
+
+    // Translate to the center of the text
+    ctx.translate(centerX, centerY);
+
+    // Set the rotation angle in radians
+    const rotationRadians = (this.rotation * Math.PI) / 180;
+    ctx.rotate(rotationRadians);
+
+    // Draw the rotated text
+    ctx.fillText(this.sticker, 0, 0);
+
+    // Restore the original transformation matrix
+    ctx.restore();
+
     ctx.fillStyle = fillStyle;
   }
+
   drag(x: number, y: number) {
     this.x = x;
     this.y = y;
@@ -212,6 +284,7 @@ function setCursorPos(
 }
 
 function redraw() {
+  console.log(color);
   clearCanvas();
   // console.log("this is the color", color);
   lines.forEach((line) => line.display(ctx));
@@ -265,9 +338,10 @@ const standardLine = 4;
 const thickLine = 8;
 const thinLine = 1;
 let mode = "line";
-let color = "";
+let color = "#000000";
 let currentSticker = "";
 let lineWidth: number = standardLine;
+let rotation = 0;
 
 const change = new Event("drawing-change");
 const toolChange = new Event("tool-move");
@@ -308,7 +382,14 @@ canvas.addEventListener("mouseout", () => {
 canvas.addEventListener("mouseenter", (e) => {
   setCursorPos(cursor, e);
 
-  tool = new ToolCommnad(cursor.x, cursor.y, currentSticker, mode, color);
+  tool = new ToolCommnad(
+    cursor.x,
+    cursor.y,
+    currentSticker,
+    mode,
+    color,
+    rotation
+  );
 });
 
 canvas.addEventListener("mousedown", (e) => {
@@ -330,7 +411,14 @@ canvas.addEventListener("mousemove", (e) => {
     lines[lines.length - 1].display(ctx);
     redoLines.length = 0;
   } else {
-    tool = new ToolCommnad(cursor.x, cursor.y, currentSticker, mode, color);
+    tool = new ToolCommnad(
+      cursor.x,
+      cursor.y,
+      currentSticker,
+      mode,
+      color,
+      rotation
+    );
     lines[lines.length - 1].display(ctx);
     canvas.dispatchEvent(toolChange);
   }
@@ -340,9 +428,18 @@ canvas.addEventListener("mouseup", (e) => {
   cursor.active = false;
   setCursorPos(cursor, e);
   if (mode == "sticker") {
-    lines.push(new StickerCommand(cursor.x, cursor.y, currentSticker, color));
+    lines.push(
+      new StickerCommand(cursor.x, cursor.y, currentSticker, color, rotation)
+    );
   }
-  tool = new ToolCommnad(cursor.x, cursor.y, currentSticker, mode, color);
+  tool = new ToolCommnad(
+    cursor.x,
+    cursor.y,
+    currentSticker,
+    mode,
+    color,
+    rotation
+  );
 
   canvas.dispatchEvent(change);
 });
@@ -422,6 +519,10 @@ exportButton.addEventListener("click", exportImg);
 
 colorWheel.addEventListener("input", () => {
   color = colorWheel.value;
-  console.log("color changed to ", color);
+});
+
+rotateSlider.addEventListener("input", () => {
+  rotation = parseFloat(rotateSlider.value);
+  rotateText.innerText = ` Sticker rotation ${rotateSlider.value} Degrees`;
 });
 //-------------------------------------------------------------------------------------
