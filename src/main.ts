@@ -134,8 +134,11 @@ class ToolCommnad {
           break;
       }
     } else if (this.mode == "sticker") {
+      const fillStyle = ctx.fillStyle;
+      ctx.fillStyle = "black";
       ctx.font = `${Math.max(7, 25)}px monospace`;
       ctx.fillText(this.sticker, this.x - 2, this.y + 2.5);
+      ctx.fillStyle = fillStyle;
     }
   }
 }
@@ -151,8 +154,11 @@ class StickerCommand {
     this.sticker = sticker;
   }
   display(ctx: CanvasRenderingContext2D) {
+    const fillStyle = ctx.fillStyle;
     ctx.font = `${Math.max(7, 25)}px monospace`;
+    ctx.fillStyle = "black";
     ctx.fillText(this.sticker, this.x - 2, this.y + 2.5);
+    ctx.fillStyle = fillStyle;
   }
   drag(x: number, y: number) {
     this.x = x;
@@ -241,6 +247,10 @@ const availableStickers: Sticker[] = [
     emoji: "😂",
     button: document.createElement("button"),
   },
+  {
+    emoji: "Custom sticker",
+    button: document.createElement("button"),
+  },
 ];
 
 availableStickers.forEach((sticker) => setupStickerButton(sticker));
@@ -264,7 +274,7 @@ canvas.addEventListener("mousedown", (e) => {
   setCursorState(true);
   setCursorPos(cursor, e);
   tool = null;
-  if (!currentSticker) {
+  if (mode == "line") {
     lines.push(new LineCommand(cursor.x, cursor.y, lineWidth));
   }
 
@@ -273,7 +283,7 @@ canvas.addEventListener("mousedown", (e) => {
 
 canvas.addEventListener("mousemove", (e) => {
   setCursorPos(cursor, e);
-  if (cursor.active && ctx && !currentSticker) {
+  if (cursor.active && ctx && mode == "line") {
     tool = null;
     lines[lines.length - 1].drag(cursor.x, cursor.y);
     lines[lines.length - 1].display(ctx);
@@ -288,7 +298,7 @@ canvas.addEventListener("mousemove", (e) => {
 canvas.addEventListener("mouseup", (e) => {
   cursor.active = false;
   setCursorPos(cursor, e);
-  if (currentSticker) {
+  if (mode == "sticker") {
     lines.push(new StickerCommand(cursor.x, cursor.y, currentSticker));
   }
   tool = new ToolCommnad(cursor.x, cursor.y, currentSticker, mode);
@@ -356,6 +366,15 @@ thin.addEventListener("click", function () {
   lineWidth = thinLine;
   currentSticker = "";
   mode = "line";
+});
+
+availableStickers[3].button.addEventListener("click", function () {
+  const custStick = prompt("type the cursom sticker below");
+  if (custStick) {
+    availableStickers[3].emoji = custStick;
+    currentSticker = availableStickers[3].emoji;
+    mode = "sticker";
+  }
 });
 
 //-------------------------------------------------------------------------------------
