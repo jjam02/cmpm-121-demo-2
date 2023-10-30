@@ -55,13 +55,17 @@ thick.classList.add("selectable");
 const thin = document.createElement("button");
 thin.textContent = "thin";
 thin.classList.add("selectable");
+
+const colorWheel = document.createElement("input");
+colorWheel.type = "color";
+
 const exportButton = document.createElement("button");
 exportButton.textContent = "export";
 exportButton.style.fontSize = "2em";
 app.append(exportButton);
 
 container.append(clear, redo, undo);
-containerPen.append(thin, standard, thick);
+containerPen.append(thin, standard, thick, colorWheel);
 
 //--------------------------------------------------------------------------------------------------------
 
@@ -78,16 +82,19 @@ interface Sticker {
 class LineCommand {
   points: Point[];
   thickness: number;
-  constructor(x: number, y: number, thick: number) {
+  color: string;
+  constructor(x: number, y: number, thick: number, hex: string) {
     this.points = [{ x, y }];
     this.thickness = thick;
+    this.color = hex;
   }
   display(ctx: CanvasRenderingContext2D) {
+    const fillStyle = ctx.fillStyle;
     ctx.lineWidth = this.thickness;
-    ctx.strokeStyle = "black";
+    ctx.strokeStyle = this.color;
     const head: Point = this.points[0];
 
-    console.log("now youre drawing ");
+    //    console.log("now youre drawing ");
     ctx.beginPath();
 
     ctx.moveTo(head.x, head.y);
@@ -96,6 +103,7 @@ class LineCommand {
     });
 
     ctx.stroke();
+    ctx.fillStyle = fillStyle;
   }
   drag(x: number, y: number) {
     this.points.push({ x, y });
@@ -107,11 +115,19 @@ class ToolCommnad {
   y: number;
   sticker: string;
   mode: string;
-  constructor(x: number, y: number, sticker: string, mode: string) {
+  color: string;
+  constructor(
+    x: number,
+    y: number,
+    sticker: string,
+    mode: string,
+    hex: string
+  ) {
     this.x = x;
     this.y = y;
     this.sticker = sticker;
     this.mode = mode;
+    this.color = hex;
   }
 
   display(ctx: CanvasRenderingContext2D) {
@@ -119,19 +135,19 @@ class ToolCommnad {
     if (this.mode == "line") {
       switch (lineWidth) {
         case standardLine:
-          ctx.fillStyle = "black";
+          ctx.fillStyle = this.color;
           ctx.font = "24px monospace";
           ctx.fillText(".", this.x - 8, this.y + 3);
           ctx.fillStyle = fillStyle;
           break;
         case thinLine:
-          ctx.fillStyle = "black";
+          ctx.fillStyle = this.color;
           ctx.font = "20px monospace";
           ctx.fillText(".", this.x - 2, this.y + 2.5);
           ctx.fillStyle = fillStyle;
           break;
         case thickLine:
-          ctx.fillStyle = "black";
+          ctx.fillStyle = this.color;
           ctx.font = "64px monospace";
           ctx.fillText(".", this.x - 20, this.y + 10);
           ctx.fillStyle = fillStyle;
@@ -139,7 +155,7 @@ class ToolCommnad {
       }
     } else if (this.mode == "sticker") {
       const fillStyle = ctx.fillStyle;
-      ctx.fillStyle = "black";
+      ctx.fillStyle = this.color;
       ctx.font = `${Math.max(7, 25)}px monospace`;
       ctx.fillText(this.sticker, this.x - 2, this.y + 2.5);
       ctx.fillStyle = fillStyle;
@@ -151,16 +167,18 @@ class StickerCommand {
   x: number;
   y: number;
   sticker: string;
+  color: string;
 
-  constructor(x: number, y: number, sticker: string) {
+  constructor(x: number, y: number, sticker: string, hex: string) {
     this.x = x;
     this.y = y;
     this.sticker = sticker;
+    this.color = hex;
   }
   display(ctx: CanvasRenderingContext2D) {
     const fillStyle = ctx.fillStyle;
     ctx.font = `${Math.max(7, 25)}px monospace`;
-    ctx.fillStyle = "black";
+    ctx.fillStyle = this.color;
     ctx.fillText(this.sticker, this.x - 2, this.y + 2.5);
     ctx.fillStyle = fillStyle;
   }
@@ -195,6 +213,7 @@ function setCursorPos(
 
 function redraw() {
   clearCanvas();
+  // console.log("this is the color", color);
   lines.forEach((line) => line.display(ctx));
   if (tool) {
     tool.display(ctx);
@@ -246,6 +265,7 @@ const standardLine = 4;
 const thickLine = 8;
 const thinLine = 1;
 let mode = "line";
+let color = "";
 let currentSticker = "";
 let lineWidth: number = standardLine;
 
@@ -288,7 +308,7 @@ canvas.addEventListener("mouseout", () => {
 canvas.addEventListener("mouseenter", (e) => {
   setCursorPos(cursor, e);
 
-  tool = new ToolCommnad(cursor.x, cursor.y, currentSticker, mode);
+  tool = new ToolCommnad(cursor.x, cursor.y, currentSticker, mode, color);
 });
 
 canvas.addEventListener("mousedown", (e) => {
@@ -296,7 +316,7 @@ canvas.addEventListener("mousedown", (e) => {
   setCursorPos(cursor, e);
   tool = null;
   if (mode == "line") {
-    lines.push(new LineCommand(cursor.x, cursor.y, lineWidth));
+    lines.push(new LineCommand(cursor.x, cursor.y, lineWidth, color));
   }
 
   canvas.dispatchEvent(change);
@@ -310,7 +330,7 @@ canvas.addEventListener("mousemove", (e) => {
     lines[lines.length - 1].display(ctx);
     redoLines.length = 0;
   } else {
-    tool = new ToolCommnad(cursor.x, cursor.y, currentSticker, mode);
+    tool = new ToolCommnad(cursor.x, cursor.y, currentSticker, mode, color);
     lines[lines.length - 1].display(ctx);
     canvas.dispatchEvent(toolChange);
   }
@@ -320,9 +340,9 @@ canvas.addEventListener("mouseup", (e) => {
   cursor.active = false;
   setCursorPos(cursor, e);
   if (mode == "sticker") {
-    lines.push(new StickerCommand(cursor.x, cursor.y, currentSticker));
+    lines.push(new StickerCommand(cursor.x, cursor.y, currentSticker, color));
   }
-  tool = new ToolCommnad(cursor.x, cursor.y, currentSticker, mode);
+  tool = new ToolCommnad(cursor.x, cursor.y, currentSticker, mode, color);
 
   canvas.dispatchEvent(change);
 });
@@ -399,4 +419,9 @@ availableStickers[3].button.addEventListener("click", function () {
 });
 
 exportButton.addEventListener("click", exportImg);
+
+colorWheel.addEventListener("input", () => {
+  color = colorWheel.value;
+  console.log("color changed to ", color);
+});
 //-------------------------------------------------------------------------------------
