@@ -106,7 +106,6 @@ class LineCommand {
     ctx.strokeStyle = this.color;
     const head: Point = this.points[0];
 
-    //    console.log("now youre drawing ");
     ctx.beginPath();
 
     ctx.moveTo(head.x, head.y);
@@ -171,30 +170,23 @@ class ToolCommnad {
     } else if (this.mode == "sticker") {
       const fillStyle = ctx.fillStyle;
 
-      // Save the current transformation matrix
       ctx.save();
 
       ctx.font = `${Math.max(7, 25)}px monospace`;
       ctx.fillStyle = this.color;
 
-      // Measure the width of the text
       const textWidth = ctx.measureText(this.sticker).width;
 
-      // Calculate the position to center the rotated text on the cursor
       const centerX = this.x - textWidth / 2;
       const centerY = this.y;
 
-      // Translate to the center of the text
       ctx.translate(centerX, centerY);
 
-      // Set the rotation angle in radians
       const rotationRadians = (this.rotation * Math.PI) / 180;
       ctx.rotate(rotationRadians);
 
-      // Draw the rotated text
       ctx.fillText(this.sticker, 0, 0);
 
-      // Restore the original transformation matrix
       ctx.restore();
 
       ctx.fillStyle = fillStyle;
@@ -225,30 +217,23 @@ class StickerCommand {
   display(ctx: CanvasRenderingContext2D) {
     const fillStyle = ctx.fillStyle;
 
-    // Save the current transformation matrix
     ctx.save();
 
     ctx.font = `${Math.max(7, 25)}px monospace`;
     ctx.fillStyle = this.color;
 
-    // Measure the width of the text
     const textWidth = ctx.measureText(this.sticker).width;
 
-    // Calculate the position to center the rotated text on the cursor
     const centerX = this.x - textWidth / 2;
     const centerY = this.y;
 
-    // Translate to the center of the text
     ctx.translate(centerX, centerY);
 
-    // Set the rotation angle in radians
     const rotationRadians = (this.rotation * Math.PI) / 180;
     ctx.rotate(rotationRadians);
 
-    // Draw the rotated text
     ctx.fillText(this.sticker, 0, 0);
 
-    // Restore the original transformation matrix
     ctx.restore();
 
     ctx.fillStyle = fillStyle;
@@ -284,9 +269,8 @@ function setCursorPos(
 }
 
 function redraw() {
-  console.log(color);
   clearCanvas();
-  // console.log("this is the color", color);
+
   lines.forEach((line) => line.display(ctx));
   if (tool) {
     tool.display(ctx);
