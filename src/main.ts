@@ -4,8 +4,8 @@ import "./style.css";
 const app: HTMLDivElement = document.querySelector("#app")!;
 
 const gameName = "Jonathan Paint";
-const canWidth = 256;
-const canHeight = 256;
+const canWidth = 512;
+const canHeight = 512;
 
 const container = document.createElement("container");
 container.id = "Mycontainer";
@@ -126,7 +126,7 @@ class ToolCommnad {
           break;
         case thinLine:
           ctx.fillStyle = "black";
-          ctx.font = "8px monospace";
+          ctx.font = "20px monospace";
           ctx.fillText(".", this.x - 2, this.y + 2.5);
           ctx.fillStyle = fillStyle;
           break;
@@ -223,7 +223,7 @@ function exportImg() {
   const tempCtx = tempCanvas.getContext("2d")!;
   tempCtx.fillStyle = "white";
   tempCtx.fillRect(0, 0, 1024, 1024);
-  tempCtx.scale(4, 4);
+  tempCtx.scale(2, 2);
   lines.forEach((line) => line.display(tempCtx));
 
   const anchor = document.createElement("a");
@@ -244,7 +244,7 @@ let tool: ToolCommnad | null = null;
 
 const standardLine = 4;
 const thickLine = 8;
-const thinLine = 2;
+const thinLine = 1;
 let mode = "line";
 let currentSticker = "";
 let lineWidth: number = standardLine;
@@ -269,7 +269,7 @@ const availableStickers: Sticker[] = [
     button: document.createElement("button"),
   },
   {
-    emoji: "Custom sticker",
+    emoji: "Custom stamp",
     button: document.createElement("button"),
   },
 ];
@@ -390,7 +390,7 @@ thin.addEventListener("click", function () {
 });
 
 availableStickers[3].button.addEventListener("click", function () {
-  const custStick = prompt("type the cursom sticker below");
+  const custStick = prompt("enter the custom stamp below");
   if (custStick) {
     availableStickers[3].emoji = custStick;
     currentSticker = availableStickers[3].emoji;
