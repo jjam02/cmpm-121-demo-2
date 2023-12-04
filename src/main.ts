@@ -499,6 +499,7 @@ availableStickers[3].button.addEventListener("click", function () {
     };
     setupStickerButton(sticker);
     availableStickers.push(sticker);
+    currentSticker = custStick;
 
     mode = "sticker";
   }
