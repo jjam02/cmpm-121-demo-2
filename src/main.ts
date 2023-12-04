@@ -493,7 +493,7 @@ thin.addEventListener("click", function () {
 availableStickers[3].button.addEventListener("click", function () {
   const custStick = prompt("enter the custom stamp below");
   if (custStick) {
-    let sticker = {
+    const sticker = {
       emoji: custStick,
       button: document.createElement("button"),
     };
